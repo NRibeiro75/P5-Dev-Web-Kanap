@@ -1,30 +1,34 @@
+  // ----- Récupération de l'Id pour chaque élément ----- //
   const urlSearchParams = new URLSearchParams(window.location.search);
-  // console.log(urlSearchParams);
-
   const Id = urlSearchParams.get('id');
-  // console.log(Id);
-
-  const name = urlSearchParams.get('name');
 
 
-  document.title = name;
-
+  // ----- Ajout de l'Id pour chaque élément dans l'url ----- //
   const url = 'http://localhost:3000/api/products/' + Id;
+
+  //---------------------------------------------------------------------------------//
+
+  // const productName = urlSearchParams.get("name");
+  // console.log(productName);
+  // document.title = name;
+
+  //----- Sélection des Id dans le HTML -----//
   const Img = document.querySelector('.item__img');
   const Title = document.getElementById('title');
   const Price = document.getElementById('price');
   const Description = document.getElementById('description');
   const Quantity = document.getElementById('quantity');
   const Colors = document.getElementById('colors');
+  //---------------------------------------------------------------------------------//
 
-
-
+  // ----- Récupération des éléments de l'API -----//
   const fetchProduct = async () => {
     product = await fetch(url)
       .then(res => res.json())
       .then((data) => (productsData = data));
     console.log(productsData);
 
+    // ----- Ajout des éléments de l'API via le DOM -----//'
     document.title = productsData.name;
     Img.innerHTML = `<img src="${productsData.imageUrl}" alt="${productsData.altTxt}"></img>`;
     Title.innerHTML = productsData.name;
@@ -34,49 +38,40 @@
       Colors.innerHTML += `<option value="${colors}">${colors}</option>`;
     }
   }
+  // ----- Déclaration de la Fonction "fectProduct" ----- //
   fetchProduct();
 
+  //---------------------------------------------------------------------------------//
+
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+  // ##### AJOUTER AU PANIER #####//
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+  // ----- Séléction du Bouton via son Id ----- //
   const btn_addToCart = document.getElementById("addToCart");
 
-
+  //----- Ecouter le bouton et l'envoyer au panier -----// 
   btn_addToCart.addEventListener("click", (e) => {
     e.preventDefault();
 
-    // localStorage.setItem("cart", JSON.stringify([]));
-    // var panier = JSON.parse(localStorage.getItem("cart"));
-    // console.log(panier);
-    // panier.push({
-    //   "id": 1,
-    //   "quantity": 2,
-    //   "couleur": "rouge",
-    // })
-    // localStorage.setItem("cart", JSON.stringify(panier));
-
-
-
-
-    // const colorItem = Colors.value;
+    //----- Choix de la Couleur et de la Quantité ----- //
+    const colorItem = colors.value;
     const quantityItem = Quantity.value;
 
+    // ----- Récupération des options à ajouter au panier ----- //
     const productList = {
-      //altTxt: productsData.altTxt,
-      colors: colors.value,
-      //image: productsData.imageUrl,
-      //name: productsData.name,
-      //price: productsData.price,
+      altTxt: productsData.altTxt,
+      colors: colorItem,
+      image: productsData.imageUrl,
+      name: productsData.name,
+      price: productsData.price,
       quantity: Number(quantityItem),
       _id: Id,
     };
     console.log(productList);
 
-
-
-    let panier = JSON.parse(localStorage.getItem("cart"));
-    console.log(panier);
-
-   
+    //----- PopUp de confirmation ----- // 
     const addPopUp = () => {
-
       if (window.confirm(`${productsData.name} 
 color: ${colors.value} 
 A bien été ajouté au panier
@@ -86,21 +81,52 @@ Consultez le panier OK ou revenir à l'accueil ANNULER`)) {
         window.location.href = "index.html";
       }
     }
-  
-    if (panier) {
-      panier.push(productList);
-      localStorage.setItem("cart", JSON.stringify(panier));
-      console.log(panier);
-      // conditionPopUp();
-      addPopUp();
-    } else {
-      panier = [];
-      panier.push(productList);
-      localStorage.setItem("cart", JSON.stringify(panier));
-      console.log(panier);
-      // conditionPopUp();
-      addPopUp();
-    }
 
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+    // ##### LE LOCAL STORAGE ##### //
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+    // ----- Variable "panier" dans laquelle on met les key et les values qui sont dans le localStorage ----- // 
+    let basket = JSON.parse(localStorage.getItem("cart"));
+    console.log(basket);
+    // ----- JSON.parse converti les données en format json qui sont dnas le local storage en objet JS ----- //
+
+    // ----- Fonction ajouter un produit dans le localStorage ----- // 
+     
+    const addProductLocalStorage = () => {
+    let productExist = false;
+      basket.forEach(product => {
+        console.log(product._id);
+        console.log(productList._id);
+
+        if(product._id === productList._id) {
+          product.quantity = product.quantity + 1;
+          // produit.quantity++;
+          productExist = true;
+        }
+      });
+      if (productExist === false){
+        basket.push(productList);
+      }
+      localStorage.setItem("cart", JSON.stringify(basket));
+    }
+    // ----- Si la couleur et le nombre ne sont pas séléctioné une Alert s'affiche à l'écran ----- //
+    if (quantityItem < 1 || quantityItem > 100 && colorItem === undefined) {
+      alert("Remplir Les Champs")
+    } else {
+
+      
+      // ----- S'il y a deja des produits enregistré dans le localStorage ----- //
+      if (basket) {
+        addProductLocalStorage();
+        addPopUp();
+      } 
+      // ----- S'il n'y a pas de produit enregistré dans le localStorage ----- //
+      else {
+        basket = [];
+        addProductLocalStorage();
+        addPopUp();
+      }
+    }
 
   });
